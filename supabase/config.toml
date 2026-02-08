@@ -2,3 +2,6 @@ project_id = "cdynmxdsmdpzbjzzhjkf"
 
 [functions.audit-design]
 verify_jwt = false
+
+[functions.fetch-figma-frames]
+verify_jwt = false
