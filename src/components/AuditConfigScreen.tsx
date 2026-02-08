@@ -99,17 +99,17 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
         <div className="flex items-center gap-3 mb-8">
           <span className="text-3xl">{persona.icon}</span>
           <div>
-            <h2 className="text-2xl font-bold">{persona.title} Mode</h2>
+            <h2 className="text-2xl font-bold text-foreground">{persona.title} Mode</h2>
             <p className="text-sm text-muted-foreground">{persona.subtitle}</p>
           </div>
         </div>
 
         {/* Input Mode Toggle */}
         <div className="mb-6">
-          <div className="flex rounded-xl border border-border bg-card p-1 gap-1">
+          <div className="flex border border-border bg-card p-1 gap-1">
             <button
               onClick={() => setInputMode('image')}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 py-2.5 text-sm font-medium transition-all ${
                 inputMode === 'image'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -119,7 +119,7 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
             </button>
             <button
               onClick={() => setInputMode('figma')}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 py-2.5 text-sm font-medium transition-all ${
                 inputMode === 'figma'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -152,7 +152,7 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
 
         {/* Fidelity */}
         <div className="mb-8">
-          <label className="text-sm font-medium text-muted-foreground mb-3 block">
+          <label className="text-sm font-semibold text-foreground mb-3 block">
             Design Fidelity
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -160,9 +160,9 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
               <button
                 key={opt.value}
                 onClick={() => setFidelity(opt.value)}
-                className={`p-3 rounded-lg border text-left transition-all ${
+                className={`p-3 border text-left transition-all ${
                   fidelity === opt.value
-                    ? 'border-primary bg-primary/10 text-foreground'
+                    ? 'border-primary bg-primary/5 text-foreground'
                     : 'border-border bg-card text-muted-foreground hover:border-muted-foreground'
                 }`}
               >
@@ -175,7 +175,7 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
 
         {/* Purpose */}
         <div className="mb-8">
-          <label className="text-sm font-medium text-muted-foreground mb-3 block">
+          <label className="text-sm font-semibold text-foreground mb-3 block">
             Audit Purpose
           </label>
           <div className="flex flex-wrap gap-2">
@@ -183,9 +183,9 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
               <button
                 key={opt.value}
                 onClick={() => setPurpose(opt.value)}
-                className={`px-4 py-2 rounded-full text-sm border transition-all ${
+                className={`px-4 py-2 text-sm border transition-all ${
                   purpose === opt.value
-                    ? 'border-primary bg-primary/10 text-foreground'
+                    ? 'border-primary bg-primary/5 text-foreground'
                     : 'border-border bg-card text-muted-foreground hover:border-muted-foreground'
                 }`}
               >
@@ -201,7 +201,7 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
           whileTap={canStart ? { scale: 0.98 } : undefined}
           onClick={handleStart}
           disabled={!canStart}
-          className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
+          className={`w-full py-4 font-semibold text-lg transition-all ${
             canStart
               ? 'bg-primary text-primary-foreground glow-primary hover:brightness-110'
               : 'bg-surface-3 text-muted-foreground cursor-not-allowed'

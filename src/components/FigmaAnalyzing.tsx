@@ -66,25 +66,25 @@ const FigmaAnalyzing = ({ status, frameCount }: FigmaAnalyzingProps) => {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 rounded-full border-2 border-border"
+            className="absolute inset-0 border-2 border-border"
           />
           {/* Middle ring */}
           <motion.div
             animate={{ rotate: -360 }}
             transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-3 rounded-full border border-primary/30"
+            className="absolute inset-3 border border-primary/30"
           />
           {/* Inner ring with glow */}
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-6 rounded-full border-2 border-primary/40 border-t-primary"
+            className="absolute inset-6 border-2 border-primary/40 border-t-primary"
           />
           {/* Center pulse */}
           <motion.div
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-11 rounded-full bg-primary/10 flex items-center justify-center"
+            className="absolute inset-11 bg-primary/10 flex items-center justify-center"
           >
             <span className="text-3xl">{analysisSteps[activeStep].icon}</span>
           </motion.div>
@@ -101,7 +101,7 @@ const FigmaAnalyzing = ({ status, frameCount }: FigmaAnalyzingProps) => {
                 repeat: Infinity,
                 delay: i * 0.5,
               }}
-              className="absolute w-2.5 h-2.5 rounded-full bg-primary shadow-sm"
+              className="absolute w-2.5 h-2.5 bg-primary"
               style={{
                 top: `${50 + 45 * Math.sin((i * Math.PI) / 2)}%`,
                 left: `${50 + 45 * Math.cos((i * Math.PI) / 2)}%`,
@@ -130,9 +130,9 @@ const FigmaAnalyzing = ({ status, frameCount }: FigmaAnalyzingProps) => {
         </AnimatePresence>
 
         {/* Rule Scanner */}
-        <div className="bg-card border border-border rounded-2xl p-5 text-left shadow-sm">
+        <div className="bg-card border border-border p-5 text-left">
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="w-2 h-2 bg-primary animate-pulse" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Rule Engine Active
             </span>
@@ -162,7 +162,7 @@ const FigmaAnalyzing = ({ status, frameCount }: FigmaAnalyzingProps) => {
                     className="flex items-center gap-2 text-xs py-1.5"
                   >
                     {idx === 0 ? (
-                      <span className="w-3.5 h-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
+                      <span className="w-3.5 h-3.5 border-2 border-primary border-t-transparent animate-spin shrink-0" />
                     ) : (
                       <svg
                         className="w-3.5 h-3.5 text-primary shrink-0"

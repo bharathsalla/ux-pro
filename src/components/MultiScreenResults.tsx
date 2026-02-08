@@ -25,7 +25,6 @@ const MultiScreenResults = ({
   const [showNotes, setShowNotes] = useState(true);
   const isComplete = completedScreens >= totalScreens;
 
-  // Calculate overall score from all completed screens
   const overallScore = useMemo(() => {
     const completedResults = screens.filter((s) => s.result);
     if (completedResults.length === 0) return 0;
@@ -33,7 +32,6 @@ const MultiScreenResults = ({
     return Math.round(sum / completedResults.length);
   }, [screens]);
 
-  // Aggregate all issues
   const totalIssues = useMemo(() => {
     return screens.reduce((acc, s) => {
       if (!s.result) return acc;
@@ -67,7 +65,7 @@ const MultiScreenResults = ({
       className="min-h-screen flex flex-col"
     >
       {/* Top Bar */}
-      <div className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-30">
+      <div className="border-b border-border bg-card sticky top-0 z-30">
         <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-xl">{persona.icon}</span>
@@ -84,7 +82,6 @@ const MultiScreenResults = ({
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Overall Score */}
             <div className="flex items-center gap-3">
               <ScoreRing score={overallScore} size={44} strokeWidth={3} />
               <div className="hidden sm:block">
@@ -93,13 +90,12 @@ const MultiScreenResults = ({
               </div>
             </div>
 
-            {/* Stats */}
             <div className="hidden md:flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full text-xs bg-surface-3 text-muted-foreground">
+              <span className="px-2.5 py-1 text-xs bg-surface-2 text-muted-foreground border border-border">
                 {totalIssues} issues
               </span>
               {criticalIssues > 0 && (
-                <span className="px-2.5 py-1 rounded-full text-xs bg-destructive/15 text-destructive">
+                <span className="px-2.5 py-1 text-xs bg-destructive/10 text-destructive border border-destructive/20">
                   {criticalIssues} critical
                 </span>
               )}
@@ -107,9 +103,9 @@ const MultiScreenResults = ({
 
             <button
               onClick={() => setShowNotes(!showNotes)}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
+              className={`text-xs px-3 py-1.5 border transition-all ${
                 showNotes
-                  ? "border-primary bg-primary/10 text-foreground"
+                  ? "border-primary bg-primary/5 text-foreground"
                   : "border-border text-muted-foreground hover:border-muted-foreground"
               }`}
             >
@@ -118,7 +114,7 @@ const MultiScreenResults = ({
 
             <button
               onClick={onRestart}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg border border-border hover:bg-accent"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 border border-border hover:bg-accent"
             >
               New Audit
             </button>
@@ -127,8 +123,8 @@ const MultiScreenResults = ({
       </div>
 
       <div className="flex flex-1 max-w-[1600px] mx-auto w-full">
-        {/* Left Sidebar — Screen List */}
-        <div className="w-48 lg:w-56 border-r border-border bg-card/50 shrink-0 overflow-y-auto">
+        {/* Left Sidebar */}
+        <div className="w-48 lg:w-56 border-r border-border bg-card shrink-0 overflow-y-auto">
           <div className="p-3 space-y-1.5">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold px-2 mb-2">
               Screens ({screens.length})
@@ -143,13 +139,13 @@ const MultiScreenResults = ({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
                   onClick={() => setSelectedScreen(idx)}
-                  className={`w-full text-left rounded-xl p-2 transition-all group ${
+                  className={`w-full text-left p-2 transition-all group border ${
                     isActive
-                      ? "bg-primary/10 border border-primary/30"
-                      : "hover:bg-accent border border-transparent"
+                      ? "bg-primary/5 border-primary/30"
+                      : "hover:bg-accent border-transparent"
                   }`}
                 >
-                  <div className="aspect-[3/4] rounded-lg overflow-hidden border border-border bg-surface-2 mb-2">
+                  <div className="aspect-[3/4] overflow-hidden border border-border bg-surface-2 mb-2">
                     <img
                       src={screen.screenImageUrl}
                       alt={screen.screenName}
@@ -162,7 +158,7 @@ const MultiScreenResults = ({
                       {screen.screenName}
                     </span>
                     {screen.isLoading ? (
-                      <span className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
+                      <span className="w-4 h-4 border-2 border-primary border-t-transparent animate-spin shrink-0" />
                     ) : screen.error ? (
                       <span className="text-[10px] text-destructive">Error</span>
                     ) : score !== undefined ? (
@@ -213,7 +209,7 @@ const MultiScreenResults = ({
                 ) : currentScreen.result ? (
                   <>
                     {/* Screen Score Bar */}
-                    <div className="bg-card border border-border rounded-2xl p-5 mb-5">
+                    <div className="bg-card border border-border p-5 mb-5">
                       <div className="flex flex-col md:flex-row items-center gap-5">
                         <ScoreRing
                           score={currentScreen.result.overallScore}
@@ -230,17 +226,17 @@ const MultiScreenResults = ({
                           </p>
                           <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                             <span
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                              className={`px-2.5 py-1 text-xs font-medium ${
                                 currentScreen.result.riskLevel === "High"
-                                  ? "bg-destructive/15 text-destructive"
+                                  ? "bg-destructive/10 text-destructive border border-destructive/20"
                                   : currentScreen.result.riskLevel === "Medium"
-                                  ? "bg-score-medium/15 text-score-medium"
-                                  : "bg-score-high/15 text-score-high"
+                                  ? "bg-score-medium/10 text-score-medium border border-score-medium/20"
+                                  : "bg-score-high/10 text-score-high border border-score-high/20"
                               }`}
                             >
                               Risk: {currentScreen.result.riskLevel}
                             </span>
-                            <span className="px-2.5 py-1 rounded-full text-xs bg-surface-3 text-muted-foreground">
+                            <span className="px-2.5 py-1 text-xs bg-surface-2 text-muted-foreground border border-border">
                               {currentIssues.length} issues
                             </span>
                           </div>
@@ -266,7 +262,7 @@ const MultiScreenResults = ({
                     </div>
 
                     {/* Annotated Image */}
-                    <div className="relative bg-card border border-border rounded-2xl overflow-hidden mb-5">
+                    <div className="relative bg-card border border-border overflow-hidden mb-5">
                       <div className="relative">
                         <img
                           src={currentScreen.screenImageUrl}
@@ -288,10 +284,10 @@ const MultiScreenResults = ({
                       {currentIssues.map((issue, idx) => {
                         const severityClass =
                           issue.severity === "critical"
-                            ? "bg-destructive/15 text-destructive"
+                            ? "bg-destructive/10 text-destructive border border-destructive/20"
                             : issue.severity === "warning"
-                            ? "bg-score-medium/15 text-score-medium"
-                            : "bg-primary/15 text-primary";
+                            ? "bg-score-medium/10 text-score-medium border border-score-medium/20"
+                            : "bg-primary/10 text-primary border border-primary/20";
 
                         return (
                           <motion.div
@@ -299,20 +295,20 @@ const MultiScreenResults = ({
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.05 }}
-                            className="bg-card border border-border rounded-xl p-4 flex items-start gap-3"
+                            className="bg-card border border-border p-4 flex items-start gap-3"
                           >
-                            <span className="w-6 h-6 rounded-full bg-surface-3 flex items-center justify-center text-xs font-bold text-foreground shrink-0">
+                            <span className="w-6 h-6 bg-surface-2 flex items-center justify-center text-xs font-bold text-foreground shrink-0 border border-border">
                               {idx + 1}
                             </span>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <span
-                                  className={`px-2 py-0.5 rounded text-xs font-medium ${severityClass}`}
+                                  className={`px-2 py-0.5 text-xs font-medium ${severityClass}`}
                                 >
                                   {issue.severity}
                                 </span>
                                 {issue.ruleId && (
-                                  <span className="px-2 py-0.5 rounded text-xs font-mono bg-surface-3 text-muted-foreground">
+                                  <span className="px-2 py-0.5 text-xs font-mono bg-surface-2 text-muted-foreground border border-border">
                                     {issue.ruleId}
                                   </span>
                                 )}
@@ -331,7 +327,7 @@ const MultiScreenResults = ({
                               <p className="text-xs text-muted-foreground mt-1">
                                 {issue.description}
                               </p>
-                              <div className="mt-2 p-2.5 bg-surface-2 rounded-lg border border-border">
+                              <div className="mt-2 p-2.5 bg-surface-2 border border-border">
                                 <p className="text-xs text-secondary-foreground">
                                   💡 {issue.suggestion}
                                 </p>

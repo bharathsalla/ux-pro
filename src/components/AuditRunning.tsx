@@ -96,10 +96,10 @@ const AuditRunning = ({ personaId, onComplete }: AuditRunningProps) => {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          className="w-20 h-20 mx-auto mb-8 rounded-full border-2 border-border border-t-primary"
+          className="w-20 h-20 mx-auto mb-8 border-2 border-border border-t-primary"
         />
 
-        <h2 className="text-2xl font-bold mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-2">
           Running {persona.title} Audit
         </h2>
         <p className="text-muted-foreground text-sm mb-8">
@@ -107,9 +107,9 @@ const AuditRunning = ({ personaId, onComplete }: AuditRunningProps) => {
         </p>
 
         {/* Progress bar */}
-        <div className="w-full h-1.5 bg-surface-3 rounded-full mb-6 overflow-hidden">
+        <div className="w-full h-1.5 bg-surface-3 mb-6 overflow-hidden">
           <motion.div
-            className="h-full bg-primary rounded-full"
+            className="h-full bg-primary"
             initial={{ width: "0%" }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
@@ -130,13 +130,13 @@ const AuditRunning = ({ personaId, onComplete }: AuditRunningProps) => {
                   className="flex items-center gap-3 text-sm"
                 >
                   {isActive ? (
-                    <span className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin flex-shrink-0" />
+                    <span className="w-4 h-4 border-2 border-primary border-t-transparent animate-spin flex-shrink-0" />
                   ) : (
                     <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
-                  <span className={isActive ? 'text-foreground' : 'text-muted-foreground'}>{check}</span>
+                  <span className={isActive ? 'text-foreground font-medium' : 'text-muted-foreground'}>{check}</span>
                 </motion.div>
               );
             })}

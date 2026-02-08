@@ -6,12 +6,12 @@ interface PersonaSelectProps {
   onSelect: (id: PersonaId) => void;
 }
 
-const personaAccentBg: Record<string, string> = {
-  solo: "hover:border-persona-solo/40 hover:bg-persona-solo/5",
-  lead: "hover:border-persona-lead/40 hover:bg-persona-lead/5",
-  a11y: "hover:border-persona-a11y/40 hover:bg-persona-a11y/5",
-  founder: "hover:border-persona-founder/40 hover:bg-persona-founder/5",
-  consultant: "hover:border-persona-consultant/40 hover:bg-persona-consultant/5",
+const personaAccentBorder: Record<string, string> = {
+  solo: "hover:border-persona-solo",
+  lead: "hover:border-persona-lead",
+  a11y: "hover:border-persona-a11y",
+  founder: "hover:border-persona-founder",
+  consultant: "hover:border-persona-consultant",
 };
 
 const personaIconBg: Record<string, string> = {
@@ -31,13 +31,7 @@ const PersonaSelect = ({ onSelect }: PersonaSelectProps) => {
       className="min-h-screen flex flex-col lg:flex-row"
     >
       {/* Left Column – Hero */}
-      <div className="lg:w-1/2 flex items-center justify-center bg-secondary/50 p-8 lg:p-16 lg:sticky lg:top-0 lg:h-screen relative overflow-hidden">
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)`,
-          backgroundSize: '32px 32px'
-        }} />
-
+      <div className="lg:w-1/2 flex items-center justify-center bg-card p-8 lg:p-16 lg:sticky lg:top-0 lg:h-screen relative overflow-hidden border-r border-border">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -51,7 +45,7 @@ const PersonaSelect = ({ onSelect }: PersonaSelectProps) => {
             <img
               src={heroCharacters}
               alt="UX Audit Pro characters"
-              className="w-full h-auto max-h-[400px] object-contain drop-shadow-xl"
+              className="w-full h-auto max-h-[400px] object-contain"
             />
           </motion.div>
 
@@ -85,9 +79,9 @@ const PersonaSelect = ({ onSelect }: PersonaSelectProps) => {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-sm text-primary font-semibold mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1.5 border border-primary/30 bg-primary/5 text-sm text-primary font-semibold mb-6"
           >
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="w-2 h-2 bg-primary animate-pulse" />
             UX Audit Pro
           </motion.div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-4 leading-[1.1]">
@@ -107,12 +101,12 @@ const PersonaSelect = ({ onSelect }: PersonaSelectProps) => {
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 + index * 0.06 }}
-              whileHover={{ x: 4, scale: 1.01 }}
+              whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(persona.id)}
-              className={`group relative flex items-center gap-4 p-5 rounded-2xl border border-border bg-card text-left transition-all duration-300 shadow-sm card-hover focus:outline-none focus:ring-2 focus:ring-primary/50 ${personaAccentBg[persona.id]}`}
+              className={`group relative flex items-center gap-4 p-5 border border-border bg-card text-left transition-all duration-300 card-hover focus:outline-none focus:ring-2 focus:ring-primary/50 ${personaAccentBorder[persona.id]}`}
             >
-              <span className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 ${personaIconBg[persona.id]}`}>
+              <span className={`w-12 h-12 flex items-center justify-center text-2xl shrink-0 ${personaIconBg[persona.id]}`}>
                 {persona.icon}
               </span>
               <div className="flex-1 min-w-0">
@@ -129,7 +123,7 @@ const PersonaSelect = ({ onSelect }: PersonaSelectProps) => {
                 </p>
               </div>
               <svg
-                className="w-5 h-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0"
+                className="w-5 h-5 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

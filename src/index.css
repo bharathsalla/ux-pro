@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    --background: 39 57% 96%;
     --foreground: 220 20% 12%;
 
     --card: 0 0% 100%;
@@ -18,23 +18,23 @@
     --primary: 160 60% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 94%;
+    --secondary: 35 30% 91%;
     --secondary-foreground: 220 15% 35%;
 
-    --muted: 220 14% 94%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 35 25% 92%;
+    --muted-foreground: 220 10% 42%;
 
-    --accent: 220 14% 96%;
+    --accent: 35 30% 93%;
     --accent-foreground: 220 20% 12%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
+    --border: 35 20% 85%;
+    --input: 35 20% 85%;
     --ring: 160 60% 38%;
 
-    --radius: 0.75rem;
+    --radius: 0rem;
 
     /* Persona accent colors */
     --persona-solo: 160 60% 38%;
@@ -50,20 +50,20 @@
 
     /* Glow effects */
     --glow-primary: 160 60% 38%;
-    --glow-opacity: 0.12;
+    --glow-opacity: 0.1;
 
     /* Surface layers */
     --surface-1: 0 0% 100%;
-    --surface-2: 220 14% 96%;
-    --surface-3: 220 14% 92%;
+    --surface-2: 35 30% 95%;
+    --surface-3: 35 25% 90%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 12%;
     --sidebar-primary: 160 60% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent: 35 30% 93%;
     --sidebar-accent-foreground: 220 20% 12%;
-    --sidebar-border: 220 14% 90%;
+    --sidebar-border: 35 20% 85%;
     --sidebar-ring: 160 60% 38%;
   }
 }
@@ -100,19 +100,19 @@
   }
 
   .glow-persona-solo {
-    box-shadow: 0 0 30px -5px hsl(var(--persona-solo) / 0.2);
+    box-shadow: 0 0 30px -5px hsl(var(--persona-solo) / 0.15);
   }
   .glow-persona-lead {
-    box-shadow: 0 0 30px -5px hsl(var(--persona-lead) / 0.2);
+    box-shadow: 0 0 30px -5px hsl(var(--persona-lead) / 0.15);
   }
   .glow-persona-a11y {
-    box-shadow: 0 0 30px -5px hsl(var(--persona-a11y) / 0.2);
+    box-shadow: 0 0 30px -5px hsl(var(--persona-a11y) / 0.15);
   }
   .glow-persona-founder {
-    box-shadow: 0 0 30px -5px hsl(var(--persona-founder) / 0.2);
+    box-shadow: 0 0 30px -5px hsl(var(--persona-founder) / 0.15);
   }
   .glow-persona-consultant {
-    box-shadow: 0 0 30px -5px hsl(var(--persona-consultant) / 0.2);
+    box-shadow: 0 0 30px -5px hsl(var(--persona-consultant) / 0.15);
   }
 
   .surface-1 {
@@ -134,6 +134,6 @@
   }
   .card-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px -12px hsl(var(--foreground) / 0.1);
+    box-shadow: 0 8px 30px -8px hsl(var(--foreground) / 0.08);
   }
 }

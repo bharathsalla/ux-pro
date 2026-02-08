@@ -16,9 +16,9 @@ const ScoreRing = ({ score, size = 140, strokeWidth = 8, className = "", label }
   const offset = circumference - (animatedScore / 100) * circumference;
 
   const getScoreColor = (s: number) => {
-    if (s >= 80) return "hsl(142, 71%, 45%)";
+    if (s >= 80) return "hsl(142, 71%, 40%)";
     if (s >= 60) return "hsl(38, 92%, 50%)";
-    return "hsl(0, 84%, 60%)";
+    return "hsl(0, 84%, 55%)";
   };
 
   useEffect(() => {
@@ -34,7 +34,7 @@ const ScoreRing = ({ score, size = 140, strokeWidth = 8, className = "", label }
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="hsl(230, 12%, 18%)"
+          stroke="hsl(35, 20%, 88%)"
           strokeWidth={strokeWidth}
         />
         <circle

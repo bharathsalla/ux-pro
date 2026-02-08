@@ -50,7 +50,7 @@ const ImageUpload = ({ onImageSelect, previewUrl }: ImageUploadProps) => {
 
   return (
     <div className="w-full">
-      <label className="text-sm font-medium text-muted-foreground mb-3 block">
+      <label className="text-sm font-semibold text-foreground mb-3 block">
         Upload Design Screenshot
       </label>
 
@@ -58,7 +58,7 @@ const ImageUpload = ({ onImageSelect, previewUrl }: ImageUploadProps) => {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative rounded-xl border border-border overflow-hidden bg-card group cursor-pointer"
+          className="relative border border-border overflow-hidden bg-card group cursor-pointer"
           onClick={handleClick}
         >
           <img
@@ -67,7 +67,7 @@ const ImageUpload = ({ onImageSelect, previewUrl }: ImageUploadProps) => {
             className="w-full max-h-64 object-contain"
           />
           <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <span className="text-sm text-foreground font-medium px-4 py-2 rounded-lg bg-card border border-border">
+            <span className="text-sm text-foreground font-medium px-4 py-2 bg-card border border-border">
               Change Image
             </span>
           </div>
@@ -80,7 +80,7 @@ const ImageUpload = ({ onImageSelect, previewUrl }: ImageUploadProps) => {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onClick={handleClick}
-          className={`relative flex flex-col items-center justify-center w-full h-48 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+          className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed cursor-pointer transition-all ${
             isDragging
               ? "border-primary bg-primary/5"
               : "border-border bg-card hover:border-muted-foreground"

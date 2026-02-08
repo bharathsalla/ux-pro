@@ -53,20 +53,26 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function fetchWithRetry(
   url: string,
   headers: Record<string, string>,
-  maxRetries = 4
+  maxRetries = 3
 ): Promise<Response> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const response = await fetch(url, { headers });
 
     if (response.status === 429) {
       if (attempt < maxRetries) {
-        // Longer exponential backoff: 3s, 6s, 12s, 24s
-        const waitMs = Math.pow(2, attempt) * 3000;
-        console.log(`Rate limited (429). Waiting ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+        // Check Retry-After header first
+        const retryAfter = response.headers.get("Retry-After");
+        let waitMs: number;
+        if (retryAfter) {
+          waitMs = parseInt(retryAfter, 10) * 1000;
+        } else {
+          // Exponential backoff with jitter: ~2s, ~5s, ~12s
+          waitMs = Math.pow(2, attempt + 1) * 1000 + Math.random() * 1000;
+        }
+        console.log(`Rate limited (429). Waiting ${Math.round(waitMs)}ms (attempt ${attempt + 1}/${maxRetries})`);
         await delay(waitMs);
         continue;
       }
-      // Final attempt still rate limited — return the 429 response
       console.error("Rate limit exceeded after all retries");
     }
 
@@ -110,8 +116,8 @@ serve(async (req) => {
     const { fileKey } = parsed;
     const figmaHeaders = { "X-Figma-Token": FIGMA_ACCESS_TOKEN };
 
-    // 1. Fetch file structure
-    console.log("Fetching Figma file:", fileKey);
+    // 1. Fetch file structure — SINGLE request for entire file tree
+    console.log("Fetching Figma file tree:", fileKey);
     const fileResponse = await fetchWithRetry(
       `https://api.figma.com/v1/files/${fileKey}?depth=2`,
       figmaHeaders
@@ -141,7 +147,7 @@ serve(async (req) => {
     const fileData = await fileResponse.json();
     const fileName = fileData.name || "Untitled";
 
-    // 2. Extract all top-level frames from all pages
+    // 2. Extract frames from the file tree locally — no extra API calls
     const allFrames: { id: string; name: string }[] = [];
     if (fileData.document?.children) {
       for (const page of fileData.document.children) {
@@ -156,77 +162,59 @@ serve(async (req) => {
       );
     }
 
-    // Limit to max 10 frames to minimize API calls
-    const framesToExport = allFrames.slice(0, 10);
+    // Limit to max 8 frames to minimize API pressure
+    const framesToExport = allFrames.slice(0, 8);
 
-    // 3. Wait before image export to avoid rate limiting
-    await delay(1000);
+    // 3. Export images — SINGLE request for all frames at scale=1
+    // Wait 500ms after file fetch to avoid hitting rate limit
+    await delay(500);
 
-    // Export all frames in a single request at scale=1
     const allNodeIds = framesToExport.map((f) => f.id).join(",");
-    console.log(`Exporting ${framesToExport.length} frames as images`);
+    console.log(`Exporting ${framesToExport.length} frames as images (single batch)`);
 
     const imageResponse = await fetchWithRetry(
       `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(allNodeIds)}&format=png&scale=1`,
       figmaHeaders
     );
 
-    if (!imageResponse.ok) {
-      if (imageResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "rate_limit" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      // Try smaller batches as fallback
-      console.log("Single request failed, trying batches of 3");
-      const allImages: Record<string, string> = {};
-      const BATCH_SIZE = 3;
-      
-      for (let i = 0; i < framesToExport.length; i += BATCH_SIZE) {
-        if (i > 0) await delay(2000);
+    let allImages: Record<string, string> = {};
+
+    if (imageResponse.ok) {
+      const imageData = await imageResponse.json();
+      allImages = imageData.images || {};
+    } else if (imageResponse.status === 429) {
+      return new Response(
+        JSON.stringify({ error: "rate_limit" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      // Single batch failed — try one by one with 400ms delay
+      console.log("Batch export failed, falling back to sequential");
+      for (const frame of framesToExport) {
+        await delay(400);
         
-        const batch = framesToExport.slice(i, i + BATCH_SIZE);
-        const nodeIds = batch.map((f) => f.id).join(",");
-        
-        const batchResponse = await fetchWithRetry(
-          `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(nodeIds)}&format=png&scale=1`,
+        const singleResponse = await fetchWithRetry(
+          `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(frame.id)}&format=png&scale=1`,
           figmaHeaders
         );
-        
-        if (batchResponse.ok) {
-          const batchData = await batchResponse.json();
-          Object.assign(allImages, batchData.images || {});
-        } else if (batchResponse.status === 429) {
+
+        if (singleResponse.ok) {
+          const singleData = await singleResponse.json();
+          if (singleData.images) {
+            Object.assign(allImages, singleData.images);
+          }
+        } else if (singleResponse.status === 429) {
           return new Response(
             JSON.stringify({ error: "rate_limit" }),
             { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         } else {
-          console.error(`Batch failed:`, batchResponse.status);
+          console.error(`Failed to export frame ${frame.name}:`, singleResponse.status);
         }
       }
-      
-      const frames = framesToExport
-        .map((frame) => ({
-          id: frame.id,
-          name: frame.name,
-          nodeId: frame.id,
-          imageUrl: allImages[frame.id] || null,
-        }))
-        .filter((f) => f.imageUrl !== null);
-      
-      return new Response(
-        JSON.stringify({ fileName, fileKey, frames, totalFrames: allFrames.length, exportedFrames: frames.length }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
-    const imageData = await imageResponse.json();
-    const allImages = imageData.images || {};
-
-    // 4. Build response
+    // 4. Build response — filter out frames without valid images
     const frames = framesToExport
       .map((frame) => ({
         id: frame.id,
@@ -235,6 +223,13 @@ serve(async (req) => {
         imageUrl: allImages[frame.id] || null,
       }))
       .filter((f) => f.imageUrl !== null);
+
+    if (frames.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Could not export any frame images. Figma may be temporarily unavailable. Try again in a minute." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log(`Successfully extracted ${frames.length} frames from "${fileName}"`);
 
