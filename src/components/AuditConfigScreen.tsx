@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { type PersonaId, type AuditConfig, personas } from "@/types/audit";
+import { type PersonaId, type AuditConfig, type InputMode, type FigmaFrame, personas } from "@/types/audit";
 import ImageUpload from "./ImageUpload";
+import FigmaUrlInput from "./FigmaUrlInput";
+import { useFigmaFrames } from "@/hooks/useFigmaFrames";
 
 interface AuditConfigScreenProps {
   personaId: PersonaId;
   onStart: (config: AuditConfig, imageBase64: string, imagePreviewUrl: string) => void;
+  onStartFigma: (config: AuditConfig, frames: FigmaFrame[]) => void;
   onBack: () => void;
 }
 
@@ -43,19 +46,37 @@ const purposeOptions: Record<PersonaId, { value: AuditConfig['purpose']; label: 
   ],
 };
 
-const AuditConfigScreen = ({ personaId, onStart, onBack }: AuditConfigScreenProps) => {
+const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditConfigScreenProps) => {
   const persona = personas.find(p => p.id === personaId)!;
+  const [inputMode, setInputMode] = useState<InputMode>('image');
   const [fidelity, setFidelity] = useState<AuditConfig['fidelity']>('high-fidelity');
   const [purpose, setPurpose] = useState<AuditConfig['purpose']>(purposeOptions[personaId][0].value);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
+  const { isLoading: figmaLoading, error: figmaError, frames, fileName, fetchFrames, reset: resetFigma } = useFigmaFrames();
 
   const handleImageSelect = (base64: string, previewUrl: string) => {
     setImageBase64(base64);
     setImagePreviewUrl(previewUrl);
   };
 
-  const canStart = !!imageBase64;
+  const handleFigmaFetch = useCallback(async (url: string) => {
+    await fetchFrames(url);
+  }, [fetchFrames]);
+
+  const canStartImage = inputMode === 'image' && !!imageBase64;
+  const canStartFigma = inputMode === 'figma' && frames.length > 0;
+  const canStart = canStartImage || canStartFigma;
+
+  const handleStart = () => {
+    const config: AuditConfig = { fidelity, purpose, frameCount: inputMode === 'figma' ? frames.length : 1 };
+    if (canStartImage && imagePreviewUrl) {
+      onStart(config, imageBase64!, imagePreviewUrl);
+    } else if (canStartFigma) {
+      onStartFigma(config, frames);
+    }
+  };
 
   return (
     <motion.div
@@ -83,12 +104,50 @@ const AuditConfigScreen = ({ personaId, onStart, onBack }: AuditConfigScreenProp
           </div>
         </div>
 
-        {/* Image Upload */}
+        {/* Input Mode Toggle */}
+        <div className="mb-6">
+          <div className="flex rounded-xl border border-border bg-card p-1 gap-1">
+            <button
+              onClick={() => setInputMode('image')}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                inputMode === 'image'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              📸 Upload Image
+            </button>
+            <button
+              onClick={() => setInputMode('figma')}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                inputMode === 'figma'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🎨 Figma Link
+            </button>
+          </div>
+        </div>
+
+        {/* Input Area */}
         <div className="mb-8">
-          <ImageUpload
-            onImageSelect={handleImageSelect}
-            previewUrl={imagePreviewUrl}
-          />
+          {inputMode === 'image' ? (
+            <ImageUpload
+              onImageSelect={handleImageSelect}
+              previewUrl={imagePreviewUrl}
+            />
+          ) : (
+            <FigmaUrlInput
+              onFramesFetched={() => {}}
+              isLoading={figmaLoading}
+              error={figmaError}
+              frames={frames}
+              fileName={fileName}
+              onFetch={handleFigmaFetch}
+              onReset={resetFigma}
+            />
+          )}
         </div>
 
         {/* Fidelity */}
@@ -140,11 +199,7 @@ const AuditConfigScreen = ({ personaId, onStart, onBack }: AuditConfigScreenProp
         <motion.button
           whileHover={canStart ? { scale: 1.02 } : undefined}
           whileTap={canStart ? { scale: 0.98 } : undefined}
-          onClick={() => {
-            if (canStart && imagePreviewUrl) {
-              onStart({ fidelity, purpose, frameCount: 1 }, imageBase64!, imagePreviewUrl);
-            }
-          }}
+          onClick={handleStart}
           disabled={!canStart}
           className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
             canStart
@@ -152,7 +207,13 @@ const AuditConfigScreen = ({ personaId, onStart, onBack }: AuditConfigScreenProp
               : 'bg-surface-3 text-muted-foreground cursor-not-allowed'
           }`}
         >
-          {canStart ? 'Run AI Audit →' : 'Upload a design to start'}
+          {canStart
+            ? inputMode === 'figma'
+              ? `Audit ${frames.length} Screen${frames.length > 1 ? 's' : ''} →`
+              : 'Run AI Audit →'
+            : inputMode === 'figma'
+            ? 'Paste a Figma link to start'
+            : 'Upload a design to start'}
         </motion.button>
       </div>
     </motion.div>

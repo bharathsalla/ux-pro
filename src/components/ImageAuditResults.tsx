@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { type PersonaId, type AuditResult, personas } from "@/types/audit";
+import { type PersonaId, type AuditResult, type AuditIssue, personas } from "@/types/audit";
 import ScoreRing from "./ScoreRing";
 import StickyNote from "./StickyNote";
 
@@ -19,9 +19,12 @@ const ImageAuditResults = ({
 }: ImageAuditResultsProps) => {
   const persona = personas.find((p) => p.id === personaId)!;
   const [showNotes, setShowNotes] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  // Flatten all issues for sticky notes
   const allIssues = result.categories.flatMap((cat) => cat.issues);
+  const filteredIssues = activeCategory
+    ? allIssues.filter((i) => i.category === activeCategory)
+    : allIssues;
   const criticalCount = allIssues.filter(
     (i) => i.severity === "critical"
   ).length;
@@ -31,41 +34,41 @@ const ImageAuditResults = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen px-4 py-8"
+      className="min-h-screen"
     >
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+      {/* Top Bar */}
+      <div className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{persona.icon}</span>
+            <span className="text-xl">{persona.icon}</span>
             <div>
-              <h2 className="text-xl font-bold">{persona.title} Audit</h2>
-              <p className="text-xs text-muted-foreground">
-                AI-powered analysis complete
-              </p>
+              <h2 className="text-base font-bold text-foreground">{persona.title} Audit</h2>
+              <p className="text-xs text-muted-foreground">AI-powered analysis complete</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowNotes(!showNotes)}
-              className={`text-sm px-4 py-2 rounded-lg border transition-all ${
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
                 showNotes
                   ? "border-primary bg-primary/10 text-foreground"
-                  : "border-border bg-card text-muted-foreground hover:border-muted-foreground"
+                  : "border-border text-muted-foreground hover:border-muted-foreground"
               }`}
             >
               {showNotes ? "Hide" : "Show"} Notes
             </button>
             <button
               onClick={onRestart}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg border border-border hover:bg-accent"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg border border-border hover:bg-accent"
             >
               New Audit
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Score bar */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        {/* Score Dashboard */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -105,12 +108,21 @@ const ImageAuditResults = ({
                 )}
               </div>
             </div>
-            {/* Category mini-scores */}
+            {/* Category mini-scores — clickable filters */}
             <div className="flex gap-3 flex-wrap justify-center">
               {result.categories.map((cat) => (
-                <div
+                <button
                   key={cat.name}
-                  className="flex flex-col items-center gap-1"
+                  onClick={() =>
+                    setActiveCategory(
+                      activeCategory === cat.name ? null : cat.name
+                    )
+                  }
+                  className={`flex flex-col items-center gap-1 p-1.5 rounded-lg transition-all ${
+                    activeCategory === cat.name
+                      ? "bg-primary/10 ring-1 ring-primary"
+                      : "hover:bg-accent"
+                  }`}
                 >
                   <ScoreRing
                     score={cat.score}
@@ -120,7 +132,7 @@ const ImageAuditResults = ({
                   <span className="text-[10px] text-muted-foreground font-medium max-w-[60px] text-center truncate">
                     {cat.icon} {cat.name}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -139,25 +151,34 @@ const ImageAuditResults = ({
               alt="Design under audit"
               className="w-full h-auto"
             />
-            {/* Sticky notes overlay */}
             {showNotes &&
-              allIssues.map((issue, idx) => (
+              filteredIssues.map((issue, idx) => (
                 <StickyNote key={issue.id} issue={issue} index={idx} />
               ))}
           </div>
         </motion.div>
 
-        {/* Issues list below image */}
+        {/* Issues list */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="space-y-3 mb-6"
+          className="space-y-2.5 mb-6"
         >
-          <h3 className="text-lg font-semibold text-foreground">
-            All Issues ({allIssues.length})
-          </h3>
-          {allIssues.map((issue, idx) => {
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">
+              {activeCategory ? `${activeCategory} Issues` : "All Issues"} ({filteredIssues.length})
+            </h3>
+            {activeCategory && (
+              <button
+                onClick={() => setActiveCategory(null)}
+                className="text-xs text-primary hover:underline"
+              >
+                Show all
+              </button>
+            )}
+          </div>
+          {filteredIssues.map((issue, idx) => {
             const severityClass =
               issue.severity === "critical"
                 ? "bg-destructive/15 text-destructive"
@@ -166,20 +187,33 @@ const ImageAuditResults = ({
                 : "bg-primary/15 text-primary";
 
             return (
-              <div
+              <motion.div
                 key={issue.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.04 }}
                 className="bg-card border border-border rounded-xl p-4 flex items-start gap-3"
               >
                 <span className="w-6 h-6 rounded-full bg-surface-3 flex items-center justify-center text-xs font-bold text-foreground shrink-0">
                   {idx + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span
                       className={`px-2 py-0.5 rounded text-xs font-medium ${severityClass}`}
                     >
                       {issue.severity}
                     </span>
+                    {issue.ruleId && (
+                      <span className="px-2 py-0.5 rounded text-xs font-mono bg-surface-3 text-muted-foreground">
+                        {issue.ruleId}
+                      </span>
+                    )}
+                    {issue.principle && (
+                      <span className="text-xs text-muted-foreground">
+                        {issue.principle}
+                      </span>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {issue.category}
                     </span>
@@ -196,7 +230,7 @@ const ImageAuditResults = ({
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </motion.div>

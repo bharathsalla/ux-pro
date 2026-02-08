@@ -12,6 +12,8 @@ export interface Persona {
 
 export type AuditStep = 'persona' | 'config' | 'running' | 'results';
 
+export type InputMode = 'image' | 'figma';
+
 export interface AuditConfig {
   fidelity: 'wireframe' | 'mvp' | 'high-fidelity';
   purpose: 'pre-handoff' | 'review' | 'portfolio' | 'stakeholder';
@@ -25,6 +27,10 @@ export interface AuditIssue {
   severity: 'critical' | 'warning' | 'info';
   category: string;
   suggestion: string;
+  ruleId?: string;
+  principle?: string;
+  x?: number;
+  y?: number;
 }
 
 export interface AuditCategory {
@@ -39,6 +45,21 @@ export interface AuditResult {
   categories: AuditCategory[];
   summary: string;
   riskLevel: 'Low' | 'Medium' | 'High';
+}
+
+export interface ScreenAuditResult {
+  screenName: string;
+  screenImageUrl: string;
+  result: AuditResult | null;
+  isLoading?: boolean;
+  error?: string | null;
+}
+
+export interface FigmaFrame {
+  id: string;
+  name: string;
+  nodeId: string;
+  imageUrl: string;
 }
 
 export const personas: Persona[] = [
