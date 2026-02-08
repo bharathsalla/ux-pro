@@ -16,10 +16,17 @@ import MultiScreenResults from "@/components/MultiScreenResults";
 import { useAuditDesign } from "@/hooks/useAuditDesign";
 import { toast } from "sonner";
 
+interface UploadedImage {
+  base64: string;
+  previewUrl: string;
+  file: File;
+}
+
 const Index = () => {
   const [step, setStep] = useState<AuditStep>('persona');
   const [selectedPersona, setSelectedPersona] = useState<PersonaId | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
 
   // Multi-screen state
@@ -36,13 +43,14 @@ const Index = () => {
   }, []);
 
   // Single image audit
-  const handleConfigStart = useCallback(async (cfg: AuditConfig, imageBase64: string, previewUrl: string) => {
+  const handleConfigStart = useCallback(async (cfg: AuditConfig, base64: string, previewUrl: string) => {
     if (!selectedPersona) return;
     setIsMultiScreen(false);
     setImagePreviewUrl(previewUrl);
+    setImageBase64(base64);
     setStep('running');
 
-    const result = await runAudit(imageBase64, selectedPersona, cfg);
+    const result = await runAudit(base64, selectedPersona, cfg);
 
     if (result) {
       setAuditResult(result);
@@ -53,13 +61,68 @@ const Index = () => {
     }
   }, [selectedPersona, runAudit]);
 
+  // Multi-image audit (up to 5 images)
+  const handleMultiImageStart = useCallback(async (cfg: AuditConfig, images: UploadedImage[]) => {
+    if (!selectedPersona) return;
+    setIsMultiScreen(true);
+
+    // Convert uploaded images to FigmaFrame-like format for multi-screen results
+    const frames: FigmaFrame[] = images.map((img, idx) => ({
+      id: `upload-${idx}`,
+      name: `Image ${idx + 1}`,
+      nodeId: `upload-${idx}`,
+      imageUrl: img.previewUrl,
+    }));
+    setFigmaFrames(frames);
+
+    const initialResults: ScreenAuditResult[] = images.map((img, idx) => ({
+      screenName: `Image ${idx + 1}`,
+      screenImageUrl: img.previewUrl,
+      result: null,
+      isLoading: true,
+    }));
+    setScreenResults(initialResults);
+    setCompletedScreens(0);
+    setStep('results');
+
+    // Audit each image sequentially
+    for (let i = 0; i < images.length; i++) {
+      try {
+        const result = await runAudit(images[i].base64, selectedPersona, cfg);
+        setScreenResults((prev) => {
+          const next = [...prev];
+          next[i] = {
+            screenName: `Image ${i + 1}`,
+            screenImageUrl: images[i].previewUrl,
+            result: result,
+            isLoading: false,
+            error: result ? null : "Audit failed",
+          };
+          return next;
+        });
+      } catch (e) {
+        setScreenResults((prev) => {
+          const next = [...prev];
+          next[i] = {
+            screenName: `Image ${i + 1}`,
+            screenImageUrl: images[i].previewUrl,
+            result: null,
+            isLoading: false,
+            error: e instanceof Error ? e.message : "Failed",
+          };
+          return next;
+        });
+      }
+      setCompletedScreens((prev) => prev + 1);
+    }
+  }, [selectedPersona, runAudit]);
+
   // Figma multi-screen audit
   const handleFigmaStart = useCallback(async (cfg: AuditConfig, frames: FigmaFrame[]) => {
     if (!selectedPersona) return;
     setIsMultiScreen(true);
     setFigmaFrames(frames);
 
-    // Initialize screen results with loading state
     const initialResults: ScreenAuditResult[] = frames.map((f) => ({
       screenName: f.name,
       screenImageUrl: f.imageUrl,
@@ -70,7 +133,6 @@ const Index = () => {
     setCompletedScreens(0);
     setStep('results');
 
-    // Run audits sequentially, updating results as they complete
     await runMultiScreenAudit(frames, selectedPersona, cfg, (index, screenResult) => {
       setScreenResults((prev) => {
         const next = [...prev];
@@ -85,6 +147,7 @@ const Index = () => {
     setStep('persona');
     setSelectedPersona(null);
     setImagePreviewUrl(null);
+    setImageBase64(null);
     setAuditResult(null);
     setIsMultiScreen(false);
     setFigmaFrames([]);
@@ -108,6 +171,7 @@ const Index = () => {
             key="config"
             personaId={selectedPersona}
             onStart={handleConfigStart}
+            onStartMultiImage={handleMultiImageStart}
             onStartFigma={handleFigmaStart}
             onBack={handleBack}
           />
@@ -125,6 +189,7 @@ const Index = () => {
             personaId={selectedPersona}
             result={auditResult}
             imageUrl={imagePreviewUrl}
+            imageBase64={imageBase64 || undefined}
             onRestart={handleRestart}
           />
         )}

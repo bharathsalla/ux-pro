@@ -5,9 +5,16 @@ import ImageUpload from "./ImageUpload";
 import FigmaUrlInput from "./FigmaUrlInput";
 import { useFigmaFrames } from "@/hooks/useFigmaFrames";
 
+interface UploadedImage {
+  base64: string;
+  previewUrl: string;
+  file: File;
+}
+
 interface AuditConfigScreenProps {
   personaId: PersonaId;
   onStart: (config: AuditConfig, imageBase64: string, imagePreviewUrl: string) => void;
+  onStartMultiImage?: (config: AuditConfig, images: UploadedImage[]) => void;
   onStartFigma: (config: AuditConfig, frames: FigmaFrame[]) => void;
   onBack: () => void;
 }
@@ -46,13 +53,16 @@ const purposeOptions: Record<PersonaId, { value: AuditConfig['purpose']; label: 
   ],
 };
 
-const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditConfigScreenProps) => {
+type ExtInputMode = 'single' | 'multi' | 'figma';
+
+const AuditConfigScreen = ({ personaId, onStart, onStartMultiImage, onStartFigma, onBack }: AuditConfigScreenProps) => {
   const persona = personas.find(p => p.id === personaId)!;
-  const [inputMode, setInputMode] = useState<InputMode>('image');
+  const [inputMode, setInputMode] = useState<ExtInputMode>('single');
   const [fidelity, setFidelity] = useState<AuditConfig['fidelity']>('high-fidelity');
   const [purpose, setPurpose] = useState<AuditConfig['purpose']>(purposeOptions[personaId][0].value);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
 
   const { isLoading: figmaLoading, error: figmaError, frames, fileName, fetchFrames, reset: resetFigma } = useFigmaFrames();
 
@@ -65,17 +75,36 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
     await fetchFrames(url);
   }, [fetchFrames]);
 
-  const canStartImage = inputMode === 'image' && !!imageBase64;
+  const canStartSingle = inputMode === 'single' && !!imageBase64;
+  const canStartMulti = inputMode === 'multi' && uploadedImages.length > 0;
   const canStartFigma = inputMode === 'figma' && frames.length > 0;
-  const canStart = canStartImage || canStartFigma;
+  const canStart = canStartSingle || canStartMulti || canStartFigma;
 
   const handleStart = () => {
-    const config: AuditConfig = { fidelity, purpose, frameCount: inputMode === 'figma' ? frames.length : 1 };
-    if (canStartImage && imagePreviewUrl) {
+    const config: AuditConfig = {
+      fidelity,
+      purpose,
+      frameCount: inputMode === 'figma' ? frames.length : inputMode === 'multi' ? uploadedImages.length : 1,
+    };
+
+    if (canStartSingle && imagePreviewUrl) {
       onStart(config, imageBase64!, imagePreviewUrl);
+    } else if (canStartMulti && onStartMultiImage) {
+      onStartMultiImage(config, uploadedImages);
     } else if (canStartFigma) {
       onStartFigma(config, frames);
     }
+  };
+
+  const getButtonLabel = () => {
+    if (!canStart) {
+      if (inputMode === 'figma') return 'Paste a Figma link to start';
+      if (inputMode === 'multi') return 'Upload images to start';
+      return 'Upload a design to start';
+    }
+    if (inputMode === 'figma') return `Audit ${frames.length} Screen${frames.length > 1 ? 's' : ''} →`;
+    if (inputMode === 'multi') return `Audit ${uploadedImages.length} Image${uploadedImages.length > 1 ? 's' : ''} →`;
+    return 'Run AI Audit →';
   };
 
   return (
@@ -104,18 +133,28 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
           </div>
         </div>
 
-        {/* Input Mode Toggle */}
+        {/* Input Mode Toggle - 3 modes */}
         <div className="mb-6">
           <div className="flex border border-border bg-card p-1 gap-1">
             <button
-              onClick={() => setInputMode('image')}
+              onClick={() => setInputMode('single')}
               className={`flex-1 py-2.5 text-sm font-medium transition-all ${
-                inputMode === 'image'
+                inputMode === 'single'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              📸 Upload Image
+              📸 Single
+            </button>
+            <button
+              onClick={() => setInputMode('multi')}
+              className={`flex-1 py-2.5 text-sm font-medium transition-all ${
+                inputMode === 'multi'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🖼️ Multi (5)
             </button>
             <button
               onClick={() => setInputMode('figma')}
@@ -125,17 +164,25 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              🎨 Figma Link
+              🎨 Figma
             </button>
           </div>
         </div>
 
         {/* Input Area */}
         <div className="mb-8">
-          {inputMode === 'image' ? (
+          {inputMode === 'single' ? (
             <ImageUpload
               onImageSelect={handleImageSelect}
               previewUrl={imagePreviewUrl}
+            />
+          ) : inputMode === 'multi' ? (
+            <ImageUpload
+              onImageSelect={() => {}}
+              onMultiImageSelect={setUploadedImages}
+              previewUrl={null}
+              multiMode={true}
+              uploadedImages={uploadedImages}
             />
           ) : (
             <FigmaUrlInput
@@ -207,13 +254,7 @@ const AuditConfigScreen = ({ personaId, onStart, onStartFigma, onBack }: AuditCo
               : 'bg-surface-3 text-muted-foreground cursor-not-allowed'
           }`}
         >
-          {canStart
-            ? inputMode === 'figma'
-              ? `Audit ${frames.length} Screen${frames.length > 1 ? 's' : ''} →`
-              : 'Run AI Audit →'
-            : inputMode === 'figma'
-            ? 'Paste a Figma link to start'
-            : 'Upload a design to start'}
+          {getButtonLabel()}
         </motion.button>
       </div>
     </motion.div>

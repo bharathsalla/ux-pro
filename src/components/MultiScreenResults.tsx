@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type PersonaId, type ScreenAuditResult, type AuditIssue, personas } from "@/types/audit";
 import ScoreRing from "./ScoreRing";
-import StickyNote from "./StickyNote";
+import IssueOverlay from "./IssueOverlay";
+import FunctionalityFeedback from "./FunctionalityFeedback";
 import FigmaAnalyzing from "./FigmaAnalyzing";
 
 interface MultiScreenResultsProps {
@@ -22,7 +23,6 @@ const MultiScreenResults = ({
 }: MultiScreenResultsProps) => {
   const persona = personas.find((p) => p.id === personaId)!;
   const [selectedScreen, setSelectedScreen] = useState(0);
-  const [showNotes, setShowNotes] = useState(true);
   const isComplete = completedScreens >= totalScreens;
 
   const overallScore = useMemo(() => {
@@ -70,9 +70,7 @@ const MultiScreenResults = ({
           <div className="flex items-center gap-3">
             <span className="text-xl">{persona.icon}</span>
             <div>
-              <h2 className="text-base font-bold text-foreground">
-                {persona.title} Audit
-              </h2>
+              <h2 className="text-base font-bold text-foreground">{persona.title} Audit</h2>
               <p className="text-xs text-muted-foreground">
                 {isComplete
                   ? `${screens.length} screens analyzed`
@@ -80,7 +78,6 @@ const MultiScreenResults = ({
               </p>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3">
               <ScoreRing score={overallScore} size={44} strokeWidth={3} />
@@ -89,7 +86,6 @@ const MultiScreenResults = ({
                 <p className="text-sm font-bold text-foreground">{overallScore}/100</p>
               </div>
             </div>
-
             <div className="hidden md:flex items-center gap-2">
               <span className="px-2.5 py-1 text-xs bg-surface-2 text-muted-foreground border border-border">
                 {totalIssues} issues
@@ -100,18 +96,6 @@ const MultiScreenResults = ({
                 </span>
               )}
             </div>
-
-            <button
-              onClick={() => setShowNotes(!showNotes)}
-              className={`text-xs px-3 py-1.5 border transition-all ${
-                showNotes
-                  ? "border-primary bg-primary/5 text-foreground"
-                  : "border-border text-muted-foreground hover:border-muted-foreground"
-              }`}
-            >
-              {showNotes ? "Hide" : "Show"} Notes
-            </button>
-
             <button
               onClick={onRestart}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 border border-border hover:bg-accent"
@@ -140,9 +124,7 @@ const MultiScreenResults = ({
                   transition={{ delay: idx * 0.05 }}
                   onClick={() => setSelectedScreen(idx)}
                   className={`w-full text-left p-2 transition-all group border ${
-                    isActive
-                      ? "bg-primary/5 border-primary/30"
-                      : "hover:bg-accent border-transparent"
+                    isActive ? "bg-primary/5 border-primary/30" : "hover:bg-accent border-transparent"
                   }`}
                 >
                   <div className="aspect-[3/4] overflow-hidden border border-border bg-surface-2 mb-2">
@@ -164,11 +146,7 @@ const MultiScreenResults = ({
                     ) : score !== undefined ? (
                       <span
                         className={`text-xs font-bold shrink-0 ${
-                          score >= 80
-                            ? "text-score-high"
-                            : score >= 60
-                            ? "text-score-medium"
-                            : "text-score-low"
+                          score >= 80 ? "text-score-high" : score >= 60 ? "text-score-medium" : "text-score-low"
                         }`}
                       >
                         {score}
@@ -193,18 +171,11 @@ const MultiScreenResults = ({
                 className="p-4 lg:p-6"
               >
                 {currentScreen.isLoading ? (
-                  <FigmaAnalyzing
-                    status="processing"
-                    frameCount={totalScreens}
-                  />
+                  <FigmaAnalyzing status="processing" frameCount={totalScreens} />
                 ) : currentScreen.error ? (
                   <div className="flex flex-col items-center justify-center py-32">
-                    <p className="text-destructive text-sm mb-2">
-                      Failed to audit this screen
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {currentScreen.error}
-                    </p>
+                    <p className="text-destructive text-sm mb-2">Failed to audit this screen</p>
+                    <p className="text-xs text-muted-foreground">{currentScreen.error}</p>
                   </div>
                 ) : currentScreen.result ? (
                   <>
@@ -243,15 +214,8 @@ const MultiScreenResults = ({
                         </div>
                         <div className="flex gap-2 flex-wrap justify-center">
                           {currentScreen.result.categories.map((cat) => (
-                            <div
-                              key={cat.name}
-                              className="flex flex-col items-center gap-1"
-                            >
-                              <ScoreRing
-                                score={cat.score}
-                                size={40}
-                                strokeWidth={3}
-                              />
+                            <div key={cat.name} className="flex flex-col items-center gap-1">
+                              <ScoreRing score={cat.score} size={40} strokeWidth={3} />
                               <span className="text-[9px] text-muted-foreground font-medium max-w-[50px] text-center truncate">
                                 {cat.icon} {cat.name}
                               </span>
@@ -261,19 +225,21 @@ const MultiScreenResults = ({
                       </div>
                     </div>
 
-                    {/* Annotated Image */}
-                    <div className="relative bg-card border border-border overflow-hidden mb-5">
-                      <div className="relative">
-                        <img
-                          src={currentScreen.screenImageUrl}
-                          alt={currentScreen.screenName}
-                          className="w-full h-auto"
-                        />
-                        {showNotes &&
-                          currentIssues.map((issue, idx) => (
-                            <StickyNote key={issue.id} issue={issue} index={idx} />
-                          ))}
-                      </div>
+                    {/* Annotated Image with IssueOverlay */}
+                    <div className="mb-5">
+                      <IssueOverlay
+                        issues={currentIssues}
+                        imageUrl={currentScreen.screenImageUrl}
+                        imageAlt={currentScreen.screenName}
+                      />
+                    </div>
+
+                    {/* Functionality Feedback */}
+                    <div className="mb-5">
+                      <FunctionalityFeedback
+                        imageUrl={currentScreen.screenImageUrl}
+                        screenName={currentScreen.screenName}
+                      />
                     </div>
 
                     {/* Issues List */}
@@ -302,9 +268,7 @@ const MultiScreenResults = ({
                             </span>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <span
-                                  className={`px-2 py-0.5 text-xs font-medium ${severityClass}`}
-                                >
+                                <span className={`px-2 py-0.5 text-xs font-medium ${severityClass}`}>
                                   {issue.severity}
                                 </span>
                                 {issue.ruleId && (
@@ -313,24 +277,14 @@ const MultiScreenResults = ({
                                   </span>
                                 )}
                                 {issue.principle && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {issue.principle}
-                                  </span>
+                                  <span className="text-xs text-muted-foreground">{issue.principle}</span>
                                 )}
-                                <span className="text-xs text-muted-foreground">
-                                  {issue.category}
-                                </span>
+                                <span className="text-xs text-muted-foreground">{issue.category}</span>
                               </div>
-                              <h4 className="text-sm font-medium text-foreground">
-                                {issue.title}
-                              </h4>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {issue.description}
-                              </p>
-                              <div className="mt-2 p-2.5 bg-surface-2 border border-border">
-                                <p className="text-xs text-secondary-foreground">
-                                  💡 {issue.suggestion}
-                                </p>
+                              <h4 className="text-sm font-medium text-foreground">{issue.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-1">{issue.description}</p>
+                              <div className="mt-2 p-2.5 bg-primary/5 border border-primary/20">
+                                <p className="text-xs text-foreground">💡 {issue.suggestion}</p>
                               </div>
                             </div>
                           </motion.div>
